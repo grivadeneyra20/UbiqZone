@@ -1,17 +1,14 @@
 {
-  "name": "ubicacion-familia-app",
+  "name": "gps-location-server",
   "version": "1.0.0",
-  "private": true,
+  "main": "server-index.js",
   "scripts": {
-    "sync": "npx cap sync android",
-    "open": "npx cap open android"
+    "start": "node server-index.js"
   },
   "dependencies": {
-    "@capacitor/core": "^5.7.0",
-    "@capacitor/android": "^5.7.0",
-    "@capacitor-community/background-geolocation": "^1.2.19"
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
   },
-  "devDependencies": {
-    "@capacitor/cli": "^5.7.0"
-  }
+  "private": true
 }
