@@ -3,7 +3,7 @@ const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
 
-const SERVER_VERSION = 'ultima-ubicacion-v5';
+const SERVER_VERSION = 'desconexion-tolerante-v6';
 console.log('Versión del servidor: ' + SERVER_VERSION);
 
 const app = express();
@@ -44,6 +44,7 @@ function applyLocationUpdate(clientId, room, lat, lng, name) {
   r.users[clientId].lng = lng;
   r.users[clientId].updatedAt = Date.now();
   r.users[clientId].online = true;
+  r.users[clientId].socketDisconnectedAt = null;
   if (name) r.users[clientId].name = name;
 
   const payloadOut = {
@@ -77,18 +78,41 @@ app.post('/api/location', (req, res) => {
   res.status(200).json({ ok: true });
 });
 
+// Cuando la persona abre otra app o bloquea el celular, la conexion en
+// vivo (socket) se corta enseguida, pero eso NO significa que se fue: el
+// servicio nativo de la app sigue mandando la ubicacion por otro canal.
+// Por eso ya no marcamos "desconectado" al instante: solo anotamos la hora
+// del corte, y un revisor periodico marca desconectado recien cuando pasan
+// 5 minutos sin NINGUNA senal (ni socket ni ubicacion nativa).
+const OFFLINE_AFTER_MS = 5 * 60 * 1000;
+
 function markOffline(socket) {
   const clientId = socket.data.clientId;
   if (!clientId) return;
   socket.data.rooms.forEach(room => {
     const r = rooms[room];
     if (!r || !r.users[clientId]) return;
-    r.users[clientId].online = false;
-    r.users[clientId].updatedAt = Date.now();
-    io.to(room).emit('user:offline', { room, clientId, updatedAt: r.users[clientId].updatedAt });
-    broadcastCount(room);
+    r.users[clientId].socketDisconnectedAt = Date.now();
   });
 }
+
+setInterval(() => {
+  const now = Date.now();
+  Object.keys(rooms).forEach(room => {
+    const r = rooms[room];
+    Object.values(r.users).forEach(u => {
+      if (!u.online) return;
+      if (!u.socketDisconnectedAt) return; // sigue conectado en vivo
+      const lastSignal = Math.max(u.updatedAt || 0, u.socketDisconnectedAt);
+      if (now - lastSignal > OFFLINE_AFTER_MS) {
+        u.online = false;
+        u.updatedAt = lastSignal;
+        io.to(room).emit('user:offline', { room, clientId: u.clientId, updatedAt: u.updatedAt });
+        broadcastCount(room);
+      }
+    });
+  });
+}, 30000);
 
 io.on('connection', (socket) => {
   socket.data.rooms = new Set();
@@ -131,7 +155,8 @@ io.on('connection', (socket) => {
       lat: existing ? existing.lat : null,
       lng: existing ? existing.lng : null,
       updatedAt: existing ? existing.updatedAt : Date.now(),
-      online: true
+      online: true,
+      socketDisconnectedAt: null
     };
 
     const amCreator = isCreator(room, clientId);
@@ -233,4 +258,3 @@ server.listen(PORT, () => {
   console.log('Abrí http://localhost:' + PORT + ' en el navegador');
   console.log('=================================================');
 });
-    
