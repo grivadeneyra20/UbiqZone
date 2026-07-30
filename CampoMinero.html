@@ -19,8 +19,10 @@
   .btn.on{background:#b8860b;color:#0d0a06;border-color:#f0c14b}
 
   #leyenda{position:fixed;right:8px;bottom:74px;z-index:899;background:rgba(13,10,6,.93);
-    border:1px solid #3d2f16;border-radius:10px;padding:8px 10px;font-size:10.5px;
-    color:#d9c9a3;line-height:1.6;max-width:180px;display:none}
+    border:1px solid #3d2f16;border-radius:10px;padding:7px 9px;font-size:10px;
+    color:#d9c9a3;line-height:1.5;max-width:158px;max-height:44vh;overflow-y:auto;
+    display:none;cursor:pointer}
+  #leyenda.min{max-height:26px;overflow:hidden;opacity:.75}
   #leyenda b{color:#f0c14b;display:block;margin:5px 0 2px;font-size:10.5px}
   #leyenda b:first-child{margin-top:0}
   #leyenda i{display:inline-block;width:11px;height:11px;border-radius:2px;
@@ -216,7 +218,8 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
     return L.tileLayer.wms(WMS, {
       layers: nombre, format: 'image/png', transparent: true,
       version: '1.1.1', time: rango(240), maxcc: 30,
-      opacity: 0.85, maxZoom: 19, attribution: 'Copernicus / Sentinel-2'
+      opacity: 0.85, maxZoom: 19, minZoom: 10,
+      attribution: 'Copernicus / Sentinel-2'
     });
   }
 
@@ -247,7 +250,7 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
 
   function capaIng(servicio, opacidad) {
     return new Ingemmet(servicio, { opacity: opacidad || 0.7, maxZoom: 19,
-      attribution: 'INGEMMET' });
+      minZoom: 9, attribution: 'INGEMMET' });
   }
 
   var libre  = capaIng('SERV_LIBREDENUNCIABILIDAD', 0.55);
@@ -262,7 +265,16 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
     'Buenaventura':'#a9e34b'
   };
 
-  var empresas = L.geoJSON(EMPRESAS, {
+  EMPRESAS.features.forEach(function(f) {
+    var x1=180, y1=90, x2=-180, y2=-90;
+    f.geometry.coordinates.forEach(function(a){ a.forEach(function(c){
+      if(c[0]<x1)x1=c[0]; if(c[0]>x2)x2=c[0];
+      if(c[1]<y1)y1=c[1]; if(c[1]>y2)y2=c[1];
+    });});
+    f.bb=[x1,y1,x2,y2];
+  });
+
+  var empresas = L.geoJSON(null, {
     style: function(f) {
       var c = COLEMP[f.properties.emp] || '#fff';
       return { color:c, weight:1.4, opacity:0.95, fillColor:c, fillOpacity:0.20 };
@@ -377,8 +389,14 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
       h += fila('#c0c0c4', 'nube (ignorar)');
     }
     var el = $('leyenda');
-    el.innerHTML = h;
+    el.innerHTML = h ? ('<span style="color:#f0c14b">Leyenda ▾</span><br>' + h) : '';
     el.style.display = h ? 'block' : 'none';
+    el.onclick = function(){ el.classList.toggle('min'); };
+  }
+
+  function showAviso(t) {
+    var el = $('cuantas');
+    el.textContent = t;
   }
 
   var refrescando = false;
@@ -409,6 +427,18 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
 
       capa.addData({ type: 'FeatureCollection', features: sel });
       capa.bringToFront();
+
+      if (map.hasLayer(empresas)) {
+        empresas.clearLayers();
+        var selE = [];
+        for (var j = 0; j < EMPRESAS.features.length; j++) {
+          var g = EMPRESAS.features[j], gb = g.bb;
+          if (gb[2] < x1 || gb[0] > x2 || gb[3] < y1 || gb[1] > y2) continue;
+          selE.push(g);
+          if (selE.length >= MAX_DIBUJADAS) break;
+        }
+        empresas.addData({ type: 'FeatureCollection', features: selE });
+      }
       $('cuantas').textContent = sel.length === 0 ? 'Sin concesiones en esta zona'
         : (sel.length >= MAX_DIBUJADAS ? 'Mostrando las primeras ' + MAX_DIBUJADAS + ' de esta zona'
                                        : sel.length + ' concesión' + (sel.length === 1 ? '' : 'es') + ' en pantalla');
@@ -509,7 +539,10 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
       map.removeLayer(capa); boton.classList.remove('on');
     } else {
       map.addLayer(capa); boton.classList.add('on');
-      if (map.getZoom() < 10) alert('Acercá el mapa para que se vea el detalle del satélite.');
+      if (capa === empresas) refrescarCapa();
+      if (map.getZoom() < 9) {
+        showAviso('Acercá el mapa: las capas se dibujan recién cuando estás cerca.');
+      }
     }
     // Orden fijo: ríos abajo, alteración en medio, minería arriba,
     // y las concesiones siempre por encima de todo.
