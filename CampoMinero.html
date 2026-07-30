@@ -78,12 +78,14 @@
   <button class="btn" id="bMin" title="Minería activa (selva)">🟣</button>
   <button class="btn" id="bAlt" title="Alteración (sierra)">🟡</button>
   <button class="btn" id="bRio" title="Lectura de ríos">🔵</button>
+  <button class="btn" id="bPot" title="Índice de potencial (gradiente)">⭐</button>
   <button class="btn" id="bLibre" title="Terreno libre para pedir">🟢</button>
   <button class="btn" id="bPros" title="Prospectividad con IA (INGEMMET)">🔴</button>
   <button class="btn" id="bOcur" title="Ocurrencias minerales conocidas">💎</button>
   <button class="btn" id="bEmp" title="Concesiones de las grandes mineras de oro">🏭</button>
   <button class="btn" id="bGeo" title="Geología">🗺</button>
   <button class="btn" id="bMeta" title="Franjas metalogenéticas">⛓</button>
+  <button class="btn" id="bGeof" title="Geofísica: magnetismo del subsuelo">🧲</button>
   <button class="btn" id="bPunto" title="Guardar punto">＋</button>
   <button class="btn" id="bLista" title="Mis puntos">☰</button>
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
@@ -159,6 +161,10 @@
     Las 1047 concesiones de las siete mayores productoras de oro del Perú. Sirve para calibrar la vista: mirá el bloque de Poderosa en Pataz o el de Yanacocha en Cajamarca y comparalo con lo que hay libre.<br>
     Escribí <b>-7.84, -77.56</b> en 🔎 para ver Pataz, o <b>-6.97, -78.45</b> para Yanacocha.</p>
 
+    <p class="h"><b style="color:#f0c14b">🧲 Magnetismo del subsuelo</b><br>
+    La única capa que mira hacia abajo. Se midió desde avión: las rocas enterradas alteran el campo magnético de la Tierra y eso dibuja estructuras que no se ven en superficie.<br>
+    Rojo alto, celeste bajo. Y ojo, que es al revés de lo que uno pensaría: se busca un <b>bajo magnético rodeado de altos</b>, porque los fluidos calientes destruyen la magnetita de la roca y dejan un hueco magnético. Los cambios bruscos en línea recta son fallas.</p>
+
     <p class="h"><b style="color:#f0c14b">🗺 Geología y ⛓ franjas</b><br>
     La geología pinta cada formación de un color, igual que en GEOCATMIN. Las franjas metalogenéticas marcan las bandas del país donde aparece cada tipo de yacimiento: si tu zona no cae en una franja de oro, mal empezamos.<br>
     Combinalas con 🟢 libre y vas a ver rápido qué terreno disponible tiene geología decente.</p>
@@ -171,6 +177,7 @@
 
     <p class="h"><b style="color:#f0c14b">Capas de satélite</b><br>
     🟣 <b>Minería activa</b>, para la selva. Magenta es suelo pelado, naranja es agua turbia de las pozas. Donde la playa del río se ensancha en parches con naranja al lado, hay trabajo de placer.<br>
+    ⭐ <b>Índice de potencial</b>. Lo mismo que la alteración pero como gradiente: amarillo alto, naranja medio, magenta bajo. Más fácil de leer, pero acordate de que mide alteración de la superficie, no oro — en cualquier imagen siempre habrá algo amarillo.<br>
     🟡 <b>Alteración</b>, para la sierra. Amarillo es hierro y arcillas juntos, naranja es solo hierro. No sirve donde hay vegetación.<br>
     🔵 <b>Ríos</b>. Crema son las playas de grava secas, que es donde se batea. Azul agua limpia, amarillo con carga, naranja muy turbia: aguas arriba de un naranja hay algo removiendo el fondo.<br>
     Las dos usan la imagen más reciente de los últimos 8 meses, con menos de 30% de nubes. El gris claro es nube.</p>
@@ -232,6 +239,7 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   var mineria = capaSat('MINERIA');
   var alteracion = capaSat('ALTERACION');
   var rios = capaSat('RIOS');
+  var potencial = capaSat('POTENCIAL');
 
   // Capas del INGEMMET. Su servidor no entrega teselas hechas, así que le
   // pedimos una imagen por cada cuadrito, indicándole el rectángulo en metros.
@@ -264,6 +272,7 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   var ocurre = capaIng('SERV_OCURRENCIA_MINERAL', 0.90);
   var geolog = capaIng('SERV_GEOLOGIA_100K_INTEGRADA', 0.60);
   var metalo = capaIng('SERV_METALOGENETICO', 0.50);
+  var geofis = capaIng('SERV_GEOFISICA', 0.60);
 
   // Concesiones de las cinco mayores productoras de oro del país, para
   // comparar: qué forma tiene y cuánto abarca lo de una empresa grande.
@@ -348,6 +357,13 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
 
   function dibujarLeyenda() {
     var h = '';
+    if (map.hasLayer(geofis)) {
+      h += '<b>🧲 Magnetismo</b>';
+      h += fila('#e8442e', 'alto');
+      h += fila('#f2d024', 'medio');
+      h += fila('#4ad6e8', 'bajo');
+      h += '<span>buscá el BAJO rodeado</span><br><span>de altos</span><br>';
+    }
     if (map.hasLayer(geolog)) {
       h += '<b>🗺 Geología</b>';
       h += '<span>cada color, una formación</span><br>';
@@ -388,6 +404,12 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
       h += fila('#0d59f2', 'agua limpia');
       h += fila('#f2cc4d', 'agua con carga');
       h += fila('#ff7309', 'agua muy turbia');
+    }
+    if (map.hasLayer(potencial)) {
+      h += '<b>⭐ Índice de potencial</b>';
+      h += fila('#ffff00', 'alto');
+      h += fila('#ff8000', 'medio');
+      h += fila('#ff00ff', 'bajo');
     }
     if (map.hasLayer(alteracion)) {
       h += '<b>🟡 Alteración</b>';
@@ -446,7 +468,14 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
       capa.addData({ type: 'FeatureCollection', features: sel });
       capa.bringToFront();
 
-      if (map.hasLayer(geolog)) {
+      if (map.hasLayer(geofis)) {
+      h += '<b>🧲 Magnetismo</b>';
+      h += fila('#e8442e', 'alto');
+      h += fila('#f2d024', 'medio');
+      h += fila('#4ad6e8', 'bajo');
+      h += '<span>buscá el BAJO rodeado</span><br><span>de altos</span><br>';
+    }
+    if (map.hasLayer(geolog)) {
       h += '<b>🗺 Geología</b>';
       h += '<span>cada color, una formación</span><br>';
       h += '<span>tocá el mapa en GEOCATMIN para el nombre</span><br>';
@@ -553,11 +582,13 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   // Las capas se pueden encender juntas: cada una deja transparente lo que
   // no le corresponde, así se superponen sin taparse.
   var satCapas = [
+    { capa: geofis,     boton: $('bGeof') },
     { capa: geolog,     boton: $('bGeo') },
     { capa: metalo,     boton: $('bMeta') },
     { capa: pros,       boton: $('bPros') },
     { capa: libre,      boton: $('bLibre') },
     { capa: rios,       boton: $('bRio') },
+    { capa: potencial,  boton: $('bPot') },
     { capa: alteracion, boton: $('bAlt') },
     { capa: mineria,    boton: $('bMin') },
     { capa: ocurre,     boton: $('bOcur') },
