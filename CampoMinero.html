@@ -82,6 +82,8 @@
   <button class="btn" id="bPros" title="Prospectividad con IA (INGEMMET)">🔴</button>
   <button class="btn" id="bOcur" title="Ocurrencias minerales conocidas">💎</button>
   <button class="btn" id="bEmp" title="Concesiones de las grandes mineras de oro">🏭</button>
+  <button class="btn" id="bGeo" title="Geología">🗺</button>
+  <button class="btn" id="bMeta" title="Franjas metalogenéticas">⛓</button>
   <button class="btn" id="bPunto" title="Guardar punto">＋</button>
   <button class="btn" id="bLista" title="Mis puntos">☰</button>
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
@@ -156,6 +158,10 @@
     <p class="h"><b style="color:#f0c14b">🏭 Las grandes mineras</b><br>
     Las 1047 concesiones de las siete mayores productoras de oro del Perú. Sirve para calibrar la vista: mirá el bloque de Poderosa en Pataz o el de Yanacocha en Cajamarca y comparalo con lo que hay libre.<br>
     Escribí <b>-7.84, -77.56</b> en 🔎 para ver Pataz, o <b>-6.97, -78.45</b> para Yanacocha.</p>
+
+    <p class="h"><b style="color:#f0c14b">🗺 Geología y ⛓ franjas</b><br>
+    La geología pinta cada formación de un color, igual que en GEOCATMIN. Las franjas metalogenéticas marcan las bandas del país donde aparece cada tipo de yacimiento: si tu zona no cae en una franja de oro, mal empezamos.<br>
+    Combinalas con 🟢 libre y vas a ver rápido qué terreno disponible tiene geología decente.</p>
 
     <p class="h"><b style="color:#f0c14b">Capas del INGEMMET</b><br>
     🟢 <b>Libre denunciabilidad</b>. Terreno que hoy se puede pedir. Empezá por acá: de nada sirve encontrar algo en tierra que ya tiene dueño.<br>
@@ -256,6 +262,8 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   var libre  = capaIng('SERV_LIBREDENUNCIABILIDAD', 0.55);
   var pros   = capaIng('SERV_Prospectividad_Minera_con_IA', 0.55);
   var ocurre = capaIng('SERV_OCURRENCIA_MINERAL', 0.90);
+  var geolog = capaIng('SERV_GEOLOGIA_100K_INTEGRADA', 0.60);
+  var metalo = capaIng('SERV_METALOGENETICO', 0.50);
 
   // Concesiones de las cinco mayores productoras de oro del país, para
   // comparar: qué forma tiene y cuánto abarca lo de una empresa grande.
@@ -340,6 +348,16 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
 
   function dibujarLeyenda() {
     var h = '';
+    if (map.hasLayer(geolog)) {
+      h += '<b>🗺 Geología</b>';
+      h += '<span>cada color, una formación</span><br>';
+      h += '<span>tocá el mapa en GEOCATMIN para el nombre</span><br>';
+    }
+    if (map.hasLayer(metalo)) {
+      h += '<b>⛓ Franjas metalogenéticas</b>';
+      h += '<span>dónde aparece cada tipo</span><br>';
+      h += '<span>de yacimiento</span><br>';
+    }
     if (map.hasLayer(empresas)) {
       h += '<b>🏭 Grandes mineras</b>';
       h += fila('#ffd43b','Yanacocha');
@@ -428,7 +446,17 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
       capa.addData({ type: 'FeatureCollection', features: sel });
       capa.bringToFront();
 
-      if (map.hasLayer(empresas)) {
+      if (map.hasLayer(geolog)) {
+      h += '<b>🗺 Geología</b>';
+      h += '<span>cada color, una formación</span><br>';
+      h += '<span>tocá el mapa en GEOCATMIN para el nombre</span><br>';
+    }
+    if (map.hasLayer(metalo)) {
+      h += '<b>⛓ Franjas metalogenéticas</b>';
+      h += '<span>dónde aparece cada tipo</span><br>';
+      h += '<span>de yacimiento</span><br>';
+    }
+    if (map.hasLayer(empresas)) {
         empresas.clearLayers();
         var selE = [];
         for (var j = 0; j < EMPRESAS.features.length; j++) {
@@ -525,6 +553,8 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   // Las capas se pueden encender juntas: cada una deja transparente lo que
   // no le corresponde, así se superponen sin taparse.
   var satCapas = [
+    { capa: geolog,     boton: $('bGeo') },
+    { capa: metalo,     boton: $('bMeta') },
     { capa: pros,       boton: $('bPros') },
     { capa: libre,      boton: $('bLibre') },
     { capa: rios,       boton: $('bRio') },
