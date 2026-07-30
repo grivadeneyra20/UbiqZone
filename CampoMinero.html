@@ -86,6 +86,10 @@
   <button class="btn" id="bGeo" title="Geología">🗺</button>
   <button class="btn" id="bMeta" title="Franjas metalogenéticas">⛓</button>
   <button class="btn" id="bGeof" title="Geofísica: magnetismo del subsuelo">🧲</button>
+  <button class="btn" id="bQuim" title="Geoquímica: elementos medidos en sedimentos">🧪</button>
+  <button class="btn" id="bFall" title="Fallas geológicas">📐</button>
+  <button class="btn" id="bEsp" title="Anomalías espectrales del INGEMMET">🔶</button>
+  <button class="btn" id="bPeq" title="Pequeña minería y REINFO">⚖</button>
   <button class="btn" id="bPunto" title="Guardar punto">＋</button>
   <button class="btn" id="bLista" title="Mis puntos">☰</button>
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
@@ -160,6 +164,15 @@
     <p class="h"><b style="color:#f0c14b">🏭 Las grandes mineras</b><br>
     Las 1047 concesiones de las siete mayores productoras de oro del Perú. Sirve para calibrar la vista: mirá el bloque de Poderosa en Pataz o el de Yanacocha en Cajamarca y comparalo con lo que hay libre.<br>
     Escribí <b>-7.84, -77.56</b> en 🔎 para ver Pataz, o <b>-6.97, -78.45</b> para Yanacocha.</p>
+
+    <p class="h"><b style="color:#f0c14b">🧪 Geoquímica — la más valiosa</b><br>
+    El INGEMMET recorrió el país bateando y analizando sedimentos de quebrada en laboratorio. No es un índice ni una deducción por color: es <b>oro medido en partes por millón</b>. Si una quebrada da valores altos, hay oro aguas arriba. Es lo más cerca de una respuesta directa que vas a encontrar.</p>
+
+    <p class="h"><b style="color:#f0c14b">📐 Fallas y 🔶 anomalías</b><br>
+    Las fallas son las fracturas por donde subieron los fluidos: las vetas se alojan ahí. Las anomalías espectrales son el mismo análisis que hacemos nosotros con el satélite, pero hecho por el INGEMMET con datos y calibración mejores.</p>
+
+    <p class="h"><b style="color:#f0c14b">⚖ Pequeña minería</b><br>
+    Zonas de pequeña minería y registro de formalización. Sirve para ver dónde ya hay gente trabajando en regla.</p>
 
     <p class="h"><b style="color:#f0c14b">🧲 Magnetismo del subsuelo</b><br>
     La única capa que mira hacia abajo. Se midió desde avión: las rocas enterradas alteran el campo magnético de la Tierra y eso dibuja estructuras que no se ven en superficie.<br>
@@ -273,6 +286,10 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   var geolog = capaIng('SERV_GEOLOGIA_100K_INTEGRADA', 0.60);
   var metalo = capaIng('SERV_METALOGENETICO', 0.50);
   var geofis = capaIng('SERV_GEOFISICA', 0.60);
+  var quimic = capaIng('SERV_GEOQUIMICA', 0.85);
+  var fallas = capaIng('SERV_GEOLOGIA_FALLAS', 0.90);
+  var espect = capaIng('SERV_ANOMALIA_ESPECTRAL', 0.65);
+  var pequen = capaIng('SERV_PEQUENA_MINERIA', 0.75);
 
   // Concesiones de las cinco mayores productoras de oro del país, para
   // comparar: qué forma tiene y cuánto abarca lo de una empresa grande.
@@ -357,6 +374,22 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
 
   function dibujarLeyenda() {
     var h = '';
+    if (map.hasLayer(quimic)) {
+      h += '<b>🧪 Geoquímica</b>';
+      h += '<span>oro medido en sedimentos</span><br><span>de quebrada</span><br>';
+    }
+    if (map.hasLayer(fallas)) {
+      h += '<b>📐 Fallas</b>';
+      h += '<span>por ahí suben los fluidos</span><br>';
+    }
+    if (map.hasLayer(espect)) {
+      h += '<b>🔶 Anomalía espectral</b>';
+      h += '<span>alteración, hecha por INGEMMET</span><br>';
+    }
+    if (map.hasLayer(pequen)) {
+      h += '<b>⚖ Pequeña minería</b>';
+      h += '<span>zonas y REINFO</span><br>';
+    }
     if (map.hasLayer(geofis)) {
       h += '<b>🧲 Magnetismo</b>';
       h += fila('#e8442e', 'alto');
@@ -468,7 +501,23 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
       capa.addData({ type: 'FeatureCollection', features: sel });
       capa.bringToFront();
 
-      if (map.hasLayer(geofis)) {
+      if (map.hasLayer(quimic)) {
+      h += '<b>🧪 Geoquímica</b>';
+      h += '<span>oro medido en sedimentos</span><br><span>de quebrada</span><br>';
+    }
+    if (map.hasLayer(fallas)) {
+      h += '<b>📐 Fallas</b>';
+      h += '<span>por ahí suben los fluidos</span><br>';
+    }
+    if (map.hasLayer(espect)) {
+      h += '<b>🔶 Anomalía espectral</b>';
+      h += '<span>alteración, hecha por INGEMMET</span><br>';
+    }
+    if (map.hasLayer(pequen)) {
+      h += '<b>⚖ Pequeña minería</b>';
+      h += '<span>zonas y REINFO</span><br>';
+    }
+    if (map.hasLayer(geofis)) {
       h += '<b>🧲 Magnetismo</b>';
       h += fila('#e8442e', 'alto');
       h += fila('#f2d024', 'medio');
@@ -583,6 +632,10 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
   // no le corresponde, así se superponen sin taparse.
   var satCapas = [
     { capa: geofis,     boton: $('bGeof') },
+    { capa: espect,     boton: $('bEsp') },
+    { capa: quimic,     boton: $('bQuim') },
+    { capa: fallas,     boton: $('bFall') },
+    { capa: pequen,     boton: $('bPeq') },
     { capa: geolog,     boton: $('bGeo') },
     { capa: metalo,     boton: $('bMeta') },
     { capa: pros,       boton: $('bPros') },
