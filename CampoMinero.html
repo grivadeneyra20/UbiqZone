@@ -66,6 +66,8 @@
   <button class="btn" id="bGps" title="Centrar en mí">◎</button>
   <button class="btn on" id="bCat" title="Concesiones">⛏</button>
   <button class="btn" id="bSat" title="Satélite">🛰</button>
+  <button class="btn" id="bMin" title="Minería activa (selva)">🟣</button>
+  <button class="btn" id="bAlt" title="Alteración (sierra)">🟡</button>
   <button class="btn" id="bPunto" title="Guardar punto">＋</button>
   <button class="btn" id="bLista" title="Mis puntos">☰</button>
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
@@ -135,7 +137,12 @@
     🔎 ir a una coordenada.<br>
     ⚙ filtrar por estado.</p>
 
-    <p class="h"><b style="color:#f0c14b">Colores</b><br>
+    <p class="h"><b style="color:#f0c14b">Capas de satélite</b><br>
+    🟣 <b>Minería activa</b>, para la selva. Magenta es suelo pelado, naranja es agua turbia de las pozas. Donde la playa del río se ensancha en parches con naranja al lado, hay trabajo de placer.<br>
+    🟡 <b>Alteración</b>, para la sierra. Amarillo es hierro y arcillas juntos, naranja es solo hierro. No sirve donde hay vegetación.<br>
+    Las dos usan la imagen más reciente de los últimos 8 meses, con menos de 30% de nubes. El gris claro es nube.</p>
+
+    <p class="h"><b style="color:#f0c14b">Colores de las concesiones</b><br>
     <i class="sw" style="border-color:#3b6ce0"></i>Azul: titulada, tiene dueño.<br>
     <i class="sw" style="border-color:#3aa63a"></i>Verde: en trámite, alguien la pidió.<br>
     <i class="sw" style="border-color:#b0b0b0"></i>Gris: extinguida, quedó libre.<br>
@@ -166,6 +173,29 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
     { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
   var sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     { maxZoom: 19, maxNativeZoom: 18, attribution: 'Esri' });
+
+  // Capas de satélite propias, servidas por Copernicus con los scripts
+  // que configuramos. Se pide la imagen más reciente de los últimos meses.
+  var INSTANCIA = '26db1089-c462-49a8-9355-923ab925d1cb';
+  var WMS = 'https://sh.dataspace.copernicus.eu/ogc/wms/' + INSTANCIA;
+
+  function rango(dias) {
+    var hoy = new Date();
+    var antes = new Date(hoy.getTime() - dias * 86400000);
+    function f(d){ return d.toISOString().slice(0,10); }
+    return f(antes) + '/' + f(hoy);
+  }
+
+  function capaSat(nombre) {
+    return L.tileLayer.wms(WMS, {
+      layers: nombre, format: 'image/png', transparent: true,
+      version: '1.1.1', time: rango(240), maxcc: 30,
+      opacity: 0.85, maxZoom: 19, attribution: 'Copernicus / Sentinel-2'
+    });
+  }
+
+  var mineria = capaSat('MINERIA');
+  var alteracion = capaSat('ALTERACION');
 
   var COL = { T:'#3b6ce0', R:'#3aa63a', X:'#b0b0b0', O:'#a07a3a' };
   var NOM = { T:'Titulada', R:'En trámite', X:'Extinguida', O:'Otros' };
@@ -240,6 +270,7 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
       }
 
       capa.addData({ type: 'FeatureCollection', features: sel });
+      capa.bringToFront();
       $('cuantas').textContent = sel.length === 0 ? 'Sin concesiones en esta zona'
         : (sel.length >= MAX_DIBUJADAS ? 'Mostrando las primeras ' + MAX_DIBUJADAS + ' de esta zona'
                                        : sel.length + ' concesión' + (sel.length === 1 ? '' : 'es') + ' en pantalla');
@@ -321,6 +352,24 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
   $('bCat').addEventListener('click', function(){
     if (map.hasLayer(capa)) { map.removeLayer(capa); this.classList.remove('on'); $('cuantas').textContent = ''; }
     else { map.addLayer(capa); this.classList.add('on'); refrescarCapa(); }
+  });
+
+  function alternar(capa, boton, otra, otroBoton) {
+    if (map.hasLayer(capa)) {
+      map.removeLayer(capa); boton.classList.remove('on');
+    } else {
+      if (otra && map.hasLayer(otra)) { map.removeLayer(otra); otroBoton.classList.remove('on'); }
+      map.addLayer(capa); boton.classList.add('on');
+      capa.bringToFront();
+      if (map.getZoom() < 10) alert('Acercá el mapa para que se vea el detalle del satélite.');
+    }
+  }
+
+  $('bMin').addEventListener('click', function(){
+    alternar(mineria, this, alteracion, $('bAlt'));
+  });
+  $('bAlt').addEventListener('click', function(){
+    alternar(alteracion, this, mineria, $('bMin'));
   });
 
   $('bSat').addEventListener('click', function(){
