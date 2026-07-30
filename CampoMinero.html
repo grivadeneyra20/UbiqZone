@@ -18,6 +18,13 @@
     box-shadow:0 2px 8px rgba(0,0,0,.5);flex-shrink:0;padding:0}
   .btn.on{background:#b8860b;color:#0d0a06;border-color:#f0c14b}
 
+  #leyenda{position:fixed;right:8px;bottom:74px;z-index:899;background:rgba(13,10,6,.93);
+    border:1px solid #3d2f16;border-radius:10px;padding:8px 10px;font-size:10.5px;
+    color:#d9c9a3;line-height:1.6;max-width:180px;display:none}
+  #leyenda b{color:#f0c14b;display:block;margin:5px 0 2px;font-size:10.5px}
+  #leyenda b:first-child{margin-top:0}
+  #leyenda i{display:inline-block;width:11px;height:11px;border-radius:2px;
+    margin-right:5px;vertical-align:-1px}
   #info{position:fixed;bottom:0;left:0;right:0;z-index:900;background:rgba(13,10,6,.96);
     border-top:1px solid #3d2f16;padding:8px 12px;font-size:12px;color:#d9c9a3}
   #coords{font-family:monospace;color:#f5e6c8}
@@ -75,6 +82,8 @@
   <button class="btn" id="bFiltro" title="Filtros">⚙</button>
   <button class="btn" id="bAyuda" title="Ayuda">?</button>
 </div>
+
+<div id="leyenda"></div>
 
 <div id="info">
   <span id="coords">Buscando GPS…</span> · <span id="prec">—</span><span id="rumbo"></span>
@@ -246,6 +255,42 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
 
   function $(i){ return document.getElementById(i); }
 
+  function fila(color, texto, borde) {
+    return '<span><i style="background:' + color +
+      (borde ? ';border:1px solid ' + borde : '') + '"></i>' + texto + '</span><br>';
+  }
+
+  function dibujarLeyenda() {
+    var h = '';
+    if (map.hasLayer(rios)) {
+      h += '<b>🔵 Ríos</b>';
+      h += fila('#fffbd9', 'playa de grava');
+      h += fila('#0d59f2', 'agua limpia');
+      h += fila('#f2cc4d', 'agua con carga');
+      h += fila('#ff7309', 'agua muy turbia');
+    }
+    if (map.hasLayer(alteracion)) {
+      h += '<b>🟡 Alteración</b>';
+      h += fila('#fff233', 'hierro + arcillas');
+      h += fila('#f24d0d', 'solo hierro');
+    }
+    if (map.hasLayer(mineria)) {
+      h += '<b>🟣 Minería</b>';
+      h += fila('#ff1abf', 'suelo pelado');
+      h += fila('#ff8c1a', 'poza turbia');
+    }
+    if (h) {
+      h += '<b>Concesiones</b>';
+      h += fila('transparent', 'titulada', '#3b6ce0');
+      h += fila('transparent', 'en trámite', '#3aa63a');
+      h += fila('transparent', 'extinguida', '#b0b0b0');
+      h += fila('#c0c0c4', 'nube (ignorar)');
+    }
+    var el = $('leyenda');
+    el.innerHTML = h;
+    el.style.display = h ? 'block' : 'none';
+  }
+
   var refrescando = false;
   function refrescarCapa() {
     if (refrescando) return;
@@ -357,27 +402,28 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
     else { map.addLayer(capa); this.classList.add('on'); refrescarCapa(); }
   });
 
-  // Las tres capas de satélite son excluyentes: encender una apaga las otras.
-  var satCapas = [];
+  // Las capas se pueden encender juntas: cada una deja transparente lo que
+  // no le corresponde, así se superponen sin taparse.
+  var satCapas = [
+    { capa: rios,       boton: $('bRio') },
+    { capa: alteracion, boton: $('bAlt') },
+    { capa: mineria,    boton: $('bMin') }
+  ];
+
   function alternar(capa, boton) {
     if (map.hasLayer(capa)) {
-      map.removeLayer(capa); boton.classList.remove('on'); return;
+      map.removeLayer(capa); boton.classList.remove('on');
+    } else {
+      map.addLayer(capa); boton.classList.add('on');
+      if (map.getZoom() < 10) alert('Acercá el mapa para que se vea el detalle del satélite.');
     }
-    satCapas.forEach(function(x){
-      if (x.capa !== capa && map.hasLayer(x.capa)) {
-        map.removeLayer(x.capa); x.boton.classList.remove('on');
-      }
-    });
-    map.addLayer(capa); boton.classList.add('on');
-    capa.bringToFront();
-    if (map.getZoom() < 10) alert('Acercá el mapa para que se vea el detalle del satélite.');
+    // Orden fijo: ríos abajo, alteración en medio, minería arriba,
+    // y las concesiones siempre por encima de todo.
+    satCapas.forEach(function(x){ if (map.hasLayer(x.capa)) x.capa.bringToFront(); });
+    if (map.hasLayer(capa)) capa.bringToFront();
+    dibujarLeyenda();
   }
 
-  satCapas = [
-    { capa: mineria,    boton: $('bMin') },
-    { capa: alteracion, boton: $('bAlt') },
-    { capa: rios,       boton: $('bRio') }
-  ];
   satCapas.forEach(function(x){
     x.boton.addEventListener('click', function(){ alternar(x.capa, x.boton); });
   });
@@ -527,6 +573,7 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
 
   pintarPuntos();
   refrescarCapa();
+  dibujarLeyenda();
 </script>
 </body>
 </html>
