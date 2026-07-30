@@ -76,6 +76,9 @@
   <button class="btn" id="bMin" title="Minería activa (selva)">🟣</button>
   <button class="btn" id="bAlt" title="Alteración (sierra)">🟡</button>
   <button class="btn" id="bRio" title="Lectura de ríos">🔵</button>
+  <button class="btn" id="bLibre" title="Terreno libre para pedir">🟢</button>
+  <button class="btn" id="bPros" title="Prospectividad con IA (INGEMMET)">🔴</button>
+  <button class="btn" id="bOcur" title="Ocurrencias minerales conocidas">💎</button>
   <button class="btn" id="bPunto" title="Guardar punto">＋</button>
   <button class="btn" id="bLista" title="Mis puntos">☰</button>
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
@@ -147,6 +150,12 @@
     🔎 ir a una coordenada.<br>
     ⚙ filtrar por estado.</p>
 
+    <p class="h"><b style="color:#f0c14b">Capas del INGEMMET</b><br>
+    🟢 <b>Libre denunciabilidad</b>. Terreno que hoy se puede pedir. Empezá por acá: de nada sirve encontrar algo en tierra que ya tiene dueño.<br>
+    🔴 <b>Prospectividad con IA</b>. El modelo del INGEMMET cruzando geología, geoquímica y yacimientos conocidos. Rojo es lo más favorable.<br>
+    💎 <b>Ocurrencias minerales</b>. Puntos donde ya se reportó mineral.<br>
+    La receta: prendé 🟢 y 🔴 juntas y buscá dónde se solapan. Ahí mirá la geología y recién después el satélite.</p>
+
     <p class="h"><b style="color:#f0c14b">Capas de satélite</b><br>
     🟣 <b>Minería activa</b>, para la selva. Magenta es suelo pelado, naranja es agua turbia de las pozas. Donde la playa del río se ensancha en parches con naranja al lado, hay trabajo de placer.<br>
     🟡 <b>Alteración</b>, para la sierra. Amarillo es hierro y arcillas juntos, naranja es solo hierro. No sirve donde hay vegetación.<br>
@@ -209,6 +218,36 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
   var alteracion = capaSat('ALTERACION');
   var rios = capaSat('RIOS');
 
+  // Capas del INGEMMET. Su servidor no entrega teselas hechas, así que le
+  // pedimos una imagen por cada cuadrito, indicándole el rectángulo en metros.
+  var ING = 'https://geocatmin.ingemmet.gob.pe/arcgis/rest/services/';
+
+  var Ingemmet = L.TileLayer.extend({
+    initialize: function(servicio, opciones) {
+      this._servicio = servicio;
+      L.TileLayer.prototype.initialize.call(this, '', opciones);
+    },
+    getTileUrl: function(c) {
+      var s = this.getTileSize();
+      var nwP = c.scaleBy(s), seP = nwP.add(s);
+      var nw = L.Projection.SphericalMercator.project(this._map.unproject(nwP, c.z));
+      var se = L.Projection.SphericalMercator.project(this._map.unproject(seP, c.z));
+      return ING + this._servicio + '/MapServer/export' +
+        '?bbox=' + [nw.x, se.y, se.x, nw.y].join('%2C') +
+        '&bboxSR=102100&imageSR=102100&size=' + s.x + '%2C' + s.y +
+        '&format=png32&transparent=true&dpi=96&f=image';
+    }
+  });
+
+  function capaIng(servicio, opacidad) {
+    return new Ingemmet(servicio, { opacity: opacidad || 0.7, maxZoom: 19,
+      attribution: 'INGEMMET' });
+  }
+
+  var libre  = capaIng('SERV_LIBREDENUNCIABILIDAD', 0.55);
+  var pros   = capaIng('SERV_Prospectividad_Minera_con_IA', 0.55);
+  var ocurre = capaIng('SERV_OCURRENCIA_MINERAL', 0.90);
+
   var COL = { T:'#3b6ce0', R:'#3aa63a', X:'#b0b0b0', O:'#a07a3a' };
   var NOM = { T:'Titulada', R:'En trámite', X:'Extinguida', O:'Otros' };
   var mostrar = { T:true, R:true, X:true, O:true };
@@ -262,6 +301,20 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
 
   function dibujarLeyenda() {
     var h = '';
+    if (map.hasLayer(libre)) {
+      h += '<b>🟢 Libre denunciabilidad</b>';
+      h += '<span>terreno que se puede pedir</span><br>';
+    }
+    if (map.hasLayer(pros)) {
+      h += '<b>🔴 Prospectividad IA</b>';
+      h += fila('#e03131', 'muy favorable');
+      h += fila('#f59f00', 'favorable');
+      h += fila('#94d82d', 'poco favorable');
+    }
+    if (map.hasLayer(ocurre)) {
+      h += '<b>💎 Ocurrencias</b>';
+      h += '<span>mineral ya reportado</span><br>';
+    }
     if (map.hasLayer(rios)) {
       h += '<b>🔵 Ríos</b>';
       h += fila('#fffbd9', 'playa de grava');
@@ -405,9 +458,12 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
   // Las capas se pueden encender juntas: cada una deja transparente lo que
   // no le corresponde, así se superponen sin taparse.
   var satCapas = [
+    { capa: pros,       boton: $('bPros') },
+    { capa: libre,      boton: $('bLibre') },
     { capa: rios,       boton: $('bRio') },
     { capa: alteracion, boton: $('bAlt') },
-    { capa: mineria,    boton: $('bMin') }
+    { capa: mineria,    boton: $('bMin') },
+    { capa: ocurre,     boton: $('bOcur') }
   ];
 
   function alternar(capa, boton) {
