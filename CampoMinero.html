@@ -68,6 +68,7 @@
   <button class="btn" id="bSat" title="Satélite">🛰</button>
   <button class="btn" id="bMin" title="Minería activa (selva)">🟣</button>
   <button class="btn" id="bAlt" title="Alteración (sierra)">🟡</button>
+  <button class="btn" id="bRio" title="Lectura de ríos">🔵</button>
   <button class="btn" id="bPunto" title="Guardar punto">＋</button>
   <button class="btn" id="bLista" title="Mis puntos">☰</button>
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
@@ -140,6 +141,7 @@
     <p class="h"><b style="color:#f0c14b">Capas de satélite</b><br>
     🟣 <b>Minería activa</b>, para la selva. Magenta es suelo pelado, naranja es agua turbia de las pozas. Donde la playa del río se ensancha en parches con naranja al lado, hay trabajo de placer.<br>
     🟡 <b>Alteración</b>, para la sierra. Amarillo es hierro y arcillas juntos, naranja es solo hierro. No sirve donde hay vegetación.<br>
+    🔵 <b>Ríos</b>. Crema son las playas de grava secas, que es donde se batea. Azul agua limpia, amarillo con carga, naranja muy turbia: aguas arriba de un naranja hay algo removiendo el fondo.<br>
     Las dos usan la imagen más reciente de los últimos 8 meses, con menos de 30% de nubes. El gris claro es nube.</p>
 
     <p class="h"><b style="color:#f0c14b">Colores de las concesiones</b><br>
@@ -196,6 +198,7 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
 
   var mineria = capaSat('MINERIA');
   var alteracion = capaSat('ALTERACION');
+  var rios = capaSat('RIOS');
 
   var COL = { T:'#3b6ce0', R:'#3aa63a', X:'#b0b0b0', O:'#a07a3a' };
   var NOM = { T:'Titulada', R:'En trámite', X:'Extinguida', O:'Otros' };
@@ -354,22 +357,29 @@ var CONCESIONES = {"type":"FeatureCollection","features":[{"type":"Feature","pro
     else { map.addLayer(capa); this.classList.add('on'); refrescarCapa(); }
   });
 
-  function alternar(capa, boton, otra, otroBoton) {
+  // Las tres capas de satélite son excluyentes: encender una apaga las otras.
+  var satCapas = [];
+  function alternar(capa, boton) {
     if (map.hasLayer(capa)) {
-      map.removeLayer(capa); boton.classList.remove('on');
-    } else {
-      if (otra && map.hasLayer(otra)) { map.removeLayer(otra); otroBoton.classList.remove('on'); }
-      map.addLayer(capa); boton.classList.add('on');
-      capa.bringToFront();
-      if (map.getZoom() < 10) alert('Acercá el mapa para que se vea el detalle del satélite.');
+      map.removeLayer(capa); boton.classList.remove('on'); return;
     }
+    satCapas.forEach(function(x){
+      if (x.capa !== capa && map.hasLayer(x.capa)) {
+        map.removeLayer(x.capa); x.boton.classList.remove('on');
+      }
+    });
+    map.addLayer(capa); boton.classList.add('on');
+    capa.bringToFront();
+    if (map.getZoom() < 10) alert('Acercá el mapa para que se vea el detalle del satélite.');
   }
 
-  $('bMin').addEventListener('click', function(){
-    alternar(mineria, this, alteracion, $('bAlt'));
-  });
-  $('bAlt').addEventListener('click', function(){
-    alternar(alteracion, this, mineria, $('bMin'));
+  satCapas = [
+    { capa: mineria,    boton: $('bMin') },
+    { capa: alteracion, boton: $('bAlt') },
+    { capa: rios,       boton: $('bRio') }
+  ];
+  satCapas.forEach(function(x){
+    x.boton.addEventListener('click', function(){ alternar(x.capa, x.boton); });
   });
 
   $('bSat').addEventListener('click', function(){
