@@ -65,6 +65,19 @@
   .fila input[type=checkbox]{width:auto;margin:0}
   .fila span{font-size:13px}
   .sw{display:inline-block;width:12px;height:12px;border:2px solid;margin-right:6px;vertical-align:-1px}
+  .mnav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+  .mnav span{padding:6px 9px;font-size:11px;border:1px solid #3d2f16;border-radius:14px;
+    color:#a89370;cursor:pointer;background:#0d0a06}
+  .mnav span.on{background:#b8860b;color:#0d0a06;border-color:#f0c14b;font-weight:600}
+  .msec{display:none}
+  .msec.on{display:block}
+  .msec h3{font-size:13px;color:#f0c14b;margin:14px 0 5px}
+  .msec h3:first-child{margin-top:0}
+  .msec p{font-size:12.5px;color:#d9c9a3;line-height:1.6;margin:0 0 8px}
+  .msec p.warn{color:#ffcfc7;background:#2a1208;border:1px solid #7a3020;
+    border-radius:8px;padding:8px 10px}
+  .msec b{color:#f0c14b}
+  .c{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 </style>
 </head>
 <body>
@@ -95,6 +108,7 @@
   <button class="btn" id="bBuscar" title="Ir a coordenada">🔎</button>
   <button class="btn" id="bFiltro" title="Filtros">⚙</button>
   <button class="btn" id="bAyuda" title="Ayuda">?</button>
+  <button class="btn" id="bManual" title="Manual: qué significa cada cosa">📖</button>
 </div>
 
 <div id="leyenda"></div>
@@ -144,6 +158,138 @@
     <div class="fila"><input type="checkbox" id="fO" checked><span><i class="sw" style="border-color:#a07a3a"></i>Canteras y otros (82)</span></div>
     <button class="b" id="flAplicar">Aplicar</button>
     <button class="b s" id="flCerrar">Cerrar</button>
+  </div>
+</div>
+
+
+<div class="ov" id="ovManual">
+  <div class="box" style="max-width:520px">
+    <h2>Manual</h2>
+    <p class="h">Qué significa cada capa, de dónde sale el dato y cómo leerlo.</p>
+
+    <div class="mnav">
+      <span data-s="m1">Cómo se busca</span>
+      <span data-s="m2">Capas</span>
+      <span data-s="m3">Colores</span>
+      <span data-s="m4">Fuentes</span>
+      <span data-s="m5">En el campo</span>
+      <span data-s="m6">Palabras</span>
+    </div>
+
+    <div id="m1" class="msec">
+      <h3>El orden correcto</h3>
+      <p>La mayor parte de la gente empieza al revés: busca oro y termina encontrando tierra que ya tiene dueño. El orden que sirve es este.</p>
+      <p><b>1. ¿Está libre?</b> Prendé 🟢. Si el terreno no se puede pedir, lo demás da igual.</p>
+      <p><b>2. ¿Hay oro medido cerca?</b> Prendé 🧪. Es oro analizado en laboratorio, no una suposición.</p>
+      <p><b>3. ¿La geología acompaña?</b> Prendé 🗺 y ⛓. Intrusivos y volcánicos sí; areniscas rojas no.</p>
+      <p><b>4. ¿El modelo lo marca?</b> Prendé 🔴. Es el cruce que ya hizo el INGEMMET.</p>
+      <p><b>5. ¿Se ve alterado?</b> Recién acá el satélite: ⭐ o 🟡.</p>
+      <p><b>6. Anda y bateá.</b> Ninguna pantalla reemplaza esto.</p>
+      <p class="warn">Nada de esto detecta oro. Todo junto sirve para decidir dónde meter la pala, y después hay que meterla.</p>
+    </div>
+
+    <div id="m2" class="msec">
+      <h3>Capas del INGEMMET · no gastan cuota</h3>
+      <p><b>🟢 Libre denunciabilidad.</b> Terreno que hoy se puede pedir. Cambia seguido.</p>
+      <p><b>🔴 Prospectividad con IA.</b> Modelo del INGEMMET entrenado con geología, geoquímica y yacimientos conocidos. Rojo, más favorable.</p>
+      <p><b>🧪 Geoquímica.</b> Elementos medidos en sedimentos de quebrada, analizados en laboratorio. La única capa con oro <i>medido</i>. Valores altos = hay oro aguas arriba.</p>
+      <p><b>💎 Ocurrencias.</b> Puntos donde ya se reportó mineral.</p>
+      <p><b>🗺 Geología.</b> Cada color, una formación. Las etiquetas son códigos de edad y unidad.</p>
+      <p><b>⛓ Franjas metalogenéticas.</b> Bandas del país donde aparece cada tipo de yacimiento. Si tu zona no cae en una franja de oro, mal empezamos.</p>
+      <p><b>📐 Fallas.</b> Fracturas por donde subieron los fluidos. Las vetas se alojan ahí.</p>
+      <p><b>🔶 Anomalías espectrales.</b> El mismo análisis que hacemos con satélite, pero hecho por ellos con mejor calibración.</p>
+      <p><b>🧲 Magnetismo.</b> La única que mira hacia abajo. Medido desde avión a 100-300 m de altura, con líneas de vuelo cada 1 a 3 km. Interpretable entre los primeros cientos de metros y unos 2 km de profundidad.</p>
+      <p><b>⚖ Pequeña minería.</b> Zonas y registro de formalización.</p>
+
+      <h3>Capas de satélite · gastan cuota</h3>
+      <p>Sentinel-2, píxel de 10 a 20 m, pasada cada 5 días. Usamos la toma más reciente de los últimos 8 meses con menos de 30% de nubes.</p>
+      <p><b>⭐ Potencial.</b> Índice combinado de hierro y arcillas, como gradiente. Amarillo alto, magenta bajo.</p>
+      <p><b>🟡 Alteración.</b> Lo mismo pero con umbral: solo pinta lo que pasa el corte.</p>
+      <p><b>🟣 Minería.</b> Suelo pelado y agua turbia. Para selva.</p>
+      <p><b>🔵 Ríos.</b> Playas de grava y turbidez del agua.</p>
+
+      <h3>Datos guardados dentro</h3>
+      <p><b>⛏ Concesiones de Cusco.</b> 2550, catastro de mayo 2024. Funcionan sin internet.</p>
+      <p><b>🏭 Grandes mineras.</b> 1047 concesiones de las siete mayores productoras de oro del país.</p>
+    </div>
+
+    <div id="m3" class="msec">
+      <h3>⭐ Potencial</h3>
+      <p><span class="c" style="background:#ffff00"></span><b>Amarillo</b> alto · <span class="c" style="background:#ff8000"></span><b>Naranja</b> medio · <span class="c" style="background:#ff00ff"></span><b>Magenta</b> bajo</p>
+      <p class="warn">Siempre habrá algo amarillo en cualquier imagen: el color es relativo a la escala, no a una verdad absoluta. Un cerro seco y pelado da amarillo sin tener nada.</p>
+
+      <h3>🟡 Alteración</h3>
+      <p><span class="c" style="background:#fff233"></span><b>Amarillo</b> hierro + arcillas, la firma buscada · <span class="c" style="background:#f24d0d"></span><b>Naranja</b> solo hierro</p>
+      <p>No sirve donde hay vegetación: el satélite ve la planta, no la roca.</p>
+
+      <h3>🟣 Minería</h3>
+      <p><span class="c" style="background:#ff1abf"></span><b>Magenta</b> suelo pelado donde debería haber selva · <span class="c" style="background:#ff8c1a"></span><b>Naranja</b> poza de agua turbia</p>
+      <p>Los dos juntos y pegados a un río es un frente de trabajo activo.</p>
+
+      <h3>🔵 Ríos</h3>
+      <p><span class="c" style="background:#fffbd9"></span><b>Crema</b> playa de grava seca, ahí se batea · <span class="c" style="background:#0d59f2"></span><b>Azul</b> agua limpia · <span class="c" style="background:#f2cc4d"></span><b>Amarillo</b> con carga · <span class="c" style="background:#ff7309"></span><b>Naranja</b> muy turbia</p>
+      <p>Aguas arriba de un naranja hay algo removiendo el fondo.</p>
+
+      <h3>🧲 Magnetismo</h3>
+      <p><span class="c" style="background:#e8442e"></span><b>Rojo</b> alto · <span class="c" style="background:#4ad6e8"></span><b>Celeste</b> bajo</p>
+      <p>Al revés de lo que uno pensaría: se busca un <b>bajo rodeado de altos</b>. Los fluidos calientes destruyen la magnetita y dejan un hueco magnético. Los cambios bruscos en línea recta son fallas.</p>
+
+      <h3>Concesiones</h3>
+      <p><span class="c" style="border:2px solid #3b6ce0;background:transparent"></span><b>Azul</b> titulada, tiene dueño · <span class="c" style="border:2px solid #3aa63a;background:transparent"></span><b>Verde</b> en trámite · <span class="c" style="border:2px solid #b0b0b0;background:transparent"></span><b>Gris</b> extinguida, quedó libre · <span class="c" style="border:2px solid #a07a3a;background:transparent"></span><b>Marrón</b> canteras y otros</p>
+
+      <h3>En todas</h3>
+      <p><span class="c" style="background:#c0c0c4"></span><b>Gris claro</b> nube o sombra de nube. Ignorala y cambiá de fecha.</p>
+    </div>
+
+    <div id="m4" class="msec">
+      <h3>De dónde sale cada cosa</h3>
+      <p><b>Imágenes de satélite</b> — Sentinel-2 del programa Copernicus, Agencia Espacial Europea. Gratis. Se piden en el momento, cada vez que movés el mapa.</p>
+      <p><b>Geología, geoquímica, magnetismo, prospectividad, fallas, franjas, terreno libre, ocurrencias</b> — INGEMMET, el instituto geológico del Perú. Son los mismos servicios que usa GEOCATMIN. Se piden en el momento.</p>
+      <p><b>Concesiones</b> — catastro minero del INGEMMET, versión de mayo de 2024, guardada dentro de la app para que funcione sin señal.</p>
+      <p><b>Mapa base</b> — OpenStreetMap y las imágenes satelitales de Esri.</p>
+      <p class="warn">Las concesiones cambian a diario. Para algo serio, confirmá siempre en GEOCATMIN o en la consulta SIDEMCAT de INGEMMET Digital.</p>
+    </div>
+
+    <div id="m5" class="msec">
+      <h3>Oro y pirita</h3>
+      <p><b>Raya.</b> Frotá contra un azulejo sin esmaltar. Oro deja raya <b>amarilla</b>; pirita, <b>negra verdosa</b>. Es la prueba definitiva.</p>
+      <p><b>Dureza.</b> El oro es blando: se hunde con una aguja, se aplana. La pirita es quebradiza: se parte en polvo. Si se rompe, no es oro.</p>
+      <p><b>Forma.</b> La pirita crece en cubos con caras planas. El oro de río es irregular y abollado. Un cubito perfecto es pirita.</p>
+      <p><b>Brillo a la sombra.</b> El oro brilla igual en sombra y bajo el agua. La pirita se apaga.</p>
+      <p><b>Densidad.</b> Oro 19.3, pirita 5.0. En la batea se separan solos.</p>
+      <p><b>Mica dorada.</b> Escamas que flotan y se doblan sin romperse.</p>
+      <p><b>Calcopirita.</b> Más anaranjada, también con raya negra verdosa.</p>
+
+      <h3>Dónde se acumula el oro en un río</h3>
+      <p>Es 19 veces más pesado que el agua, así que cae donde la corriente afloja: parte <b>interna de las curvas</b>, detrás de rocas grandes, en confluencias, y en <b>terrazas antiguas</b> donde el río corría antes.</p>
+      <p>Si en la batea sale <b>arena negra</b>, buena señal: es magnetita, y se deposita donde se deposita el oro.</p>
+
+      <h3>Método</h3>
+      <p>Bateá la quebrada más abajo. Si no hay color, descartá la cuenca entera. Si hay, subí y bateá otra vez. Donde desaparece, la fuente quedó entre esos dos puntos.</p>
+
+      <h3>Antes de entrar</h3>
+      <p>Sin concesión no significa libre para entrar: la tierra es de <b>comunidades campesinas</b>. Se pide permiso a las autoridades del lugar. Llegar sin avisar cierra puertas para siempre.</p>
+      <p class="warn">El mercurio se acumula en el cuerpo, daña el sistema nervioso de forma irreversible y pasa a los hijos. La batea y la concentración por gravedad recuperan lo mismo.</p>
+    </div>
+
+    <div id="m6" class="msec">
+      <h3>Palabras</h3>
+      <p><b>Alteración.</b> Cambio de la roca por fluidos calientes. Deja óxidos de hierro y arcillas. Es lo que buscamos ver, porque a veces viene con oro.</p>
+      <p><b>Gossan.</b> Sombrero de hierro. Costra oxidada rojiza sobre un cuerpo mineralizado.</p>
+      <p><b>Placer / aluvial.</b> Oro suelto en la grava de un río, ya desprendido de su roca madre. Se saca con batea.</p>
+      <p><b>Veta.</b> Fractura rellena de mineral. Angosta pero rica. Se saca con socavón.</p>
+      <p><b>Diseminado.</b> Oro repartido en poca ley en un volumen enorme. Es lo que se explota a tajo abierto.</p>
+      <p><b>Intrusivo.</b> Roca que subió fundida y se enfrió dentro de la corteza. Trae los fluidos. Buena señal.</p>
+      <p><b>Capas rojas.</b> Areniscas teñidas de hierro desde que se formaron. Dan la misma firma que la alteración y no tienen nada. Es el falso positivo más común en los Andes.</p>
+      <p><b>Concesión.</b> Derecho a explorar y explotar un área. En Perú el subsuelo es del Estado.</p>
+      <p><b>Petitorio.</b> La solicitud para obtener una concesión. Se presenta en INGEMMET Digital.</p>
+      <p><b>Derecho de vigencia.</b> Pago anual por hectárea. Si no se paga, la concesión se extingue y el terreno vuelve a quedar libre.</p>
+      <p><b>Ley.</b> Cuánto metal hay por tonelada. En oro se mide en gramos por tonelada; 1 a 5 g/t ya es un yacimiento.</p>
+      <p><b>Ensayo al fuego.</b> El análisis de laboratorio que dice cuánto oro hay de verdad.</p>
+      <p><b>Píxel.</b> El cuadrito del satélite. En Sentinel-2 son 10 a 20 m de lado: nada más chico que eso se puede ver.</p>
+    </div>
+
+    <button class="b s" id="mnCerrar">Cerrar</button>
   </div>
 </div>
 
@@ -795,6 +941,22 @@ var EMPRESAS = {"type":"FeatureCollection","features":[{"type":"Feature","proper
     L.circleMarker([la,lo],{radius:9,color:'#fff',weight:2,fillColor:'#ff7a6b',fillOpacity:1})
       .addTo(map).bindPopup(c ? 'Dentro de <b>'+c.n+'</b><br>'+(NOM[c.c]||'') : 'Fuera de toda concesión').openPopup();
   });
+
+  // Manual con pestañas
+  function abrirManual(sec) {
+    document.querySelectorAll('.msec').forEach(function(x){ x.classList.remove('on'); });
+    document.querySelectorAll('.mnav span').forEach(function(x){ x.classList.remove('on'); });
+    var s = sec || 'm1';
+    $(s).classList.add('on');
+    document.querySelector('.mnav span[data-s="' + s + '"]').classList.add('on');
+    $('ovManual').style.display = 'flex';
+    $('ovManual').querySelector('.box').scrollTop = 0;
+  }
+  document.querySelectorAll('.mnav span').forEach(function(x){
+    x.addEventListener('click', function(){ abrirManual(x.dataset.s); });
+  });
+  $('bManual').addEventListener('click', function(){ abrirManual('m1'); });
+  $('mnCerrar').addEventListener('click', function(){ $('ovManual').style.display='none'; });
 
   $('bAyuda').addEventListener('click', function(){ $('ovAyuda').style.display='flex'; });
   $('ayCerrar').addEventListener('click', function(){ $('ovAyuda').style.display='none'; });
